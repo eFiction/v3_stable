@@ -25,7 +25,10 @@
 if(!defined("_CHARSET")) exit( );
 // Get session variables from cookie data if not logged in.
 // To bridge to another program replace (or add to) this information with the bridge to your other script.  See examples in the includes/bridges/ folder.
-if (!empty($_COOKIE[$sitekey."_useruid"])) {
+// The uid cookie is attacker-controlled and reaches the query below before
+// the salt is compared, so only a numeric uid may be interpolated; anything
+// else is treated as not logged in.
+if (!empty($_COOKIE[$sitekey."_useruid"]) && isNumber($_COOKIE[$sitekey."_useruid"])) {
 	$userdata = dbassoc(dbquery("SELECT ap.*, "._UIDFIELD." as uid, "._PENNAMEFIELD." as penname, "._EMAILFIELD." as email, "._PASSWORDFIELD." as password FROM "._AUTHORTABLE." LEFT JOIN ".TABLEPREFIX."fanfiction_authorprefs as ap ON ap.uid = "._UIDFIELD." WHERE "._UIDFIELD." = '".$_COOKIE[$sitekey."_useruid"]."'"));
 	if($userdata && $userdata['level'] != -1 && $_COOKIE[$sitekey.'_salt'] == md5($userdata['email']+$userdata['password'])) {
 		define("USERUID", $userdata['uid']);
@@ -42,7 +45,7 @@ if (!empty($_COOKIE[$sitekey."_useruid"])) {
 		else $ageconsent = $_SESSION[$sitekey."_agecontsent"];
 	}
 }
-if(!empty($_SESSION[$sitekey."_useruid"]) && !defined("USERUID")) {
+if(!empty($_SESSION[$sitekey."_useruid"]) && isNumber($_SESSION[$sitekey."_useruid"]) && !defined("USERUID")) {
 	$userdata = dbassoc(dbquery("SELECT ap.*, "._UIDFIELD." as uid, "._PENNAMEFIELD." as penname, "._EMAILFIELD." as email, "._PASSWORDFIELD." as password FROM "._AUTHORTABLE." LEFT JOIN ".TABLEPREFIX."fanfiction_authorprefs as ap ON ap.uid = "._UIDFIELD." WHERE "._UIDFIELD." = '".$_SESSION[$sitekey."_useruid"]."'"));
 	if($userdata && $userdata['level'] != -1 && $_SESSION[$sitekey.'_salt'] == md5($userdata['email']+$userdata['password'])) {
 		define("USERUID", $userdata['uid']);
